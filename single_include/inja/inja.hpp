@@ -3135,15 +3135,15 @@ class Renderer {
 
     if (level.loop_type == LoopLevel::Type::Array) {
       level.data[static_cast<std::string>(level.value_name)] = level.values.at(level.index);  // *level.it;
-      auto& loopData = level.data["loop"];
-      loopData["index"] = level.index;
-      loopData["index1"] = level.index + 1;
-      loopData["is_first"] = (level.index == 0);
-      loopData["is_last"] = (level.index == level.size - 1);
     } else {
       level.data[static_cast<std::string>(level.key_name)] = level.map_it->first;
       level.data[static_cast<std::string>(level.value_name)] = *level.map_it->second;
     }
+    auto &loopData = level.data["loop"];
+    loopData["index"] = level.index;
+    loopData["index1"] = level.index + 1;
+    loopData["is_first"] = (level.index == 0);
+    loopData["is_last"] = (level.index == level.size - 1);
   }
 
   const TemplateStorage& m_included_templates;
@@ -3510,6 +3510,7 @@ class Renderer {
           level.value_name = bc.str;
           level.values = std::move(m_stack.back());
           level.data = (*m_data);
+          level.index = 0;
           m_stack.pop_back();
 
           if (bc.value.is_string()) {
@@ -3526,6 +3527,7 @@ class Renderer {
               level.map_values.emplace_back(it.key(), &it.value());
             }
             level.map_it = level.map_values.begin();
+            level.size = level.map_values.size();
           } else {
             if (!level.values.is_array()) {
               m_loop_stack.pop_back();
@@ -3534,7 +3536,6 @@ class Renderer {
 
             // list iterator
             level.loop_type = LoopLevel::Type::Array;
-            level.index = 0;
             level.size = level.values.size();
           }
 
@@ -3557,8 +3558,8 @@ class Renderer {
           LoopLevel& level = m_loop_stack.back();
 
           bool done;
+          level.index += 1;
           if (level.loop_type == LoopLevel::Type::Array) {
-            level.index += 1;
             done = (level.index == level.values.size());
           } else {
             level.map_it += 1;
