@@ -22,8 +22,6 @@
 
 namespace inja {
 
-using json = nlohmann::json;
-
 /*!
  * \brief Class for changing the configuration.
  */

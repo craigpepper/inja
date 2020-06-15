@@ -4,7 +4,7 @@
 #include "inja/inja.hpp"
 
 
-using json = nlohmann::json;
+using json = inja::json;
 
 
 const std::string test_file_directory {"../test/data/"};

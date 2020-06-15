@@ -1678,6 +1678,7 @@ struct ParserConfig {
 #include <string>
 #include <utility>
 
+#include <nlohmann/fifo_map.hpp>
 #include <nlohmann/json.hpp>
 
 // #include "string_view.hpp"
@@ -1686,8 +1687,13 @@ struct ParserConfig {
 
 namespace inja {
 
-using json = nlohmann::json;
+// A workaround to use fifo_map as map, we are just ignoring the 'less' compare
+template <class K, class V, class dummy_compare, class A> using my_workaround_fifo_map = nlohmann::fifo_map<K, V, nlohmann::fifo_map_compare<K>, A>;
 
+using json = nlohmann::basic_json<my_workaround_fifo_map>;
+}
+
+namespace inja {
 
 struct Bytecode {
   enum class Op : uint8_t {
@@ -1811,8 +1817,6 @@ struct Bytecode {
 
 
 namespace inja {
-
-using json = nlohmann::json;
 
 using Arguments = std::vector<const json*>;
 using CallbackFunction = std::function<json(Arguments& args)>;
@@ -3517,12 +3521,10 @@ class Renderer {
             level.loop_type = LoopLevel::Type::Map;
             level.key_name = bc.value.get_ref<const std::string&>();
 
-            // sort by key
+            // copy loop variables
             for (auto it = level.values.begin(), end = level.values.end(); it != end; ++it) {
               level.map_values.emplace_back(it.key(), &it.value());
             }
-            auto sort_lambda = [](const LoopLevel::KeyValue& a, const LoopLevel::KeyValue& b) { return a.first < b.first; };
-            std::sort(level.map_values.begin(), level.map_values.end(), sort_lambda);
             level.map_it = level.map_values.begin();
           } else {
             if (!level.values.is_array()) {
@@ -3601,8 +3603,6 @@ class Renderer {
 
 
 namespace inja {
-
-using json = nlohmann::json;
 
 /*!
  * \brief Class for changing the configuration.

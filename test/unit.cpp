@@ -5,7 +5,7 @@
 #include "inja/inja.hpp"
 
 
-using json = nlohmann::json;
+using json = inja::json;
 
 
 TEST_CASE("copy-environment") {
