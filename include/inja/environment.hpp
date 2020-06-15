@@ -38,7 +38,10 @@ class Environment {
   /// Sets the opener and closer for template statements
   void set_statement(const std::string& open, const std::string& close) {
     m_lexer_config.statement_open = open;
+    m_lexer_config.statement_open_no_lstrip = open + "+";
+    m_lexer_config.statement_open_force_lstrip = open + "-";
     m_lexer_config.statement_close = close;
+    m_lexer_config.statement_close_trim = "-" + close;
     m_lexer_config.update_open_chars();
   }
 

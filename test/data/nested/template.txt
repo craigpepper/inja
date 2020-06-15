@@ -1,3 +1,12 @@
 {% for x in xarray %}{% for y in yarray %}
 {{x}}-{{y}}
 {% endfor %}{% endfor %}
+{% for x in xarray %}{% for y in yarray -%}
+{{x}}-{{y}}
+{% endfor %}{% endfor -%}
+{% for x in xarray -%}
+    {% for y in yarray %}{{x}}-{{y}} {% endfor %}
+{% endfor -%}
+{% for x in xarray -%}
+    {%- for y in yarray %}{{x}}-{{y}} {% endfor %}
+{% endfor -%}

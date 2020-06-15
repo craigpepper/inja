@@ -24,6 +24,8 @@ class Lexer {
     LineStart,
     LineBody,
     StatementStart,
+    StatementStartNoLstrip,
+    StatementStartForceLstrip,
     StatementBody,
     CommentStart,
     CommentBody
@@ -88,8 +90,15 @@ class Lexer {
         if (inja::string_view::starts_with(open_str, m_config.expression_open)) {
           m_state = State::ExpressionStart;
         } else if (inja::string_view::starts_with(open_str, m_config.statement_open)) {
-          m_state = State::StatementStart;
-          must_lstrip = m_config.lstrip_blocks;
+          if (inja::string_view::starts_with(open_str, m_config.statement_open_no_lstrip)) {
+            m_state = State::StatementStartNoLstrip;
+          } else if (inja::string_view::starts_with(open_str, m_config.statement_open_force_lstrip )) {
+            m_state = State::StatementStartForceLstrip;
+            must_lstrip = true;
+          } else {
+            m_state = State::StatementStart;
+            must_lstrip = m_config.lstrip_blocks;
+          }
         } else if (inja::string_view::starts_with(open_str, m_config.comment_open)) {
           m_state = State::CommentStart;
           must_lstrip = m_config.lstrip_blocks;
@@ -123,6 +132,16 @@ class Lexer {
         m_pos += m_config.statement_open.size();
         return make_token(Token::Kind::StatementOpen);
       }
+      case State::StatementStartNoLstrip: {
+        m_state = State::StatementBody;
+        m_pos += m_config.statement_open_no_lstrip.size();
+        return make_token(Token::Kind::StatementOpen);
+      }
+      case State::StatementStartForceLstrip: {
+        m_state = State::StatementBody;
+        m_pos += m_config.statement_open_force_lstrip.size();
+        return make_token(Token::Kind::StatementOpen);
+      }
       case State::CommentStart: {
         m_state = State::CommentBody;
         m_pos += m_config.comment_open.size();
@@ -133,7 +152,7 @@ class Lexer {
       case State::LineBody:
         return scan_body("\n", Token::Kind::LineStatementClose);
       case State::StatementBody:
-        return scan_body(m_config.statement_close, Token::Kind::StatementClose, m_config.trim_blocks);
+        return scan_body(m_config.statement_close, Token::Kind::StatementClose, m_config.statement_close_trim, m_config.trim_blocks);
       case State::CommentBody: {
         // fast-scan to comment close
         size_t end = m_in.substr(m_pos).find(m_config.comment_close);
@@ -155,7 +174,7 @@ class Lexer {
   const LexerConfig& get_config() const { return m_config; }
 
  private:
-  Token scan_body(nonstd::string_view close, Token::Kind closeKind, bool trim = false) {
+  Token scan_body(nonstd::string_view close, Token::Kind closeKind, nonstd::string_view close_trim = nonstd::string_view(), bool trim = false) {
   again:
     // skip whitespace (except for \n as it might be a close)
     if (m_tok_start >= m_in.size()) return make_token(Token::Kind::Eof);
@@ -166,6 +185,13 @@ class Lexer {
     }
 
     // check for close
+    if (!close_trim.empty() && inja::string_view::starts_with(m_in.substr(m_tok_start), close_trim)) {
+      m_state = State::Text;
+      m_pos = m_tok_start + close_trim.size();
+      Token tok = make_token(closeKind);
+      skip_newline();
+      return tok;
+    }
     if (inja::string_view::starts_with(m_in.substr(m_tok_start), close)) {
       m_state = State::Text;
       m_pos = m_tok_start + close.size();
