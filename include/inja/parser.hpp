@@ -387,9 +387,18 @@ class Parser {
       // build the relative path
       json json_name = json::parse(m_tok.text);
       std::string pathname = static_cast<std::string>(path);
-      pathname += json_name.get_ref<const std::string&>();
-      if (pathname.compare(0, 2, "./") == 0) {
-        pathname.erase(0, 2);
+      std::string include_path = json_name.get_ref<const std::string&>();
+      if (m_lexer.get_config().dot_is_current_dir) {
+        if (include_path.compare(0, 2, "./") != 0) {
+          pathname += include_path;
+        } else {
+          pathname = include_path;
+        }
+      } else {
+        pathname += include_path;
+        if (pathname.compare(0, 2, "./") == 0) {
+          pathname.erase(0, 2);
+        }
       }
       // sys::path::remove_dots(pathname, true, sys::path::Style::posix);
 

@@ -72,6 +72,11 @@ class Environment {
     m_lexer_config.lstrip_blocks = lstrip_blocks;
   }
 
+  /// Sets whether to strip the spaces and tabs from the start of a line to a block
+  void set_dot_is_current_dir(bool dot_is_current_dir) {
+    m_lexer_config.dot_is_current_dir = dot_is_current_dir;
+  }
+
   /// Sets the element notation syntax
   void set_element_notation(ElementNotation notation) {
     m_parser_config.notation = notation;

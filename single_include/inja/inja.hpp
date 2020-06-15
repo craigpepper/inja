@@ -1633,6 +1633,8 @@ struct LexerConfig {
   bool trim_blocks {false};
   bool lstrip_blocks {false};
 
+  bool dot_is_current_dir {false};
+
   void update_open_chars() {
     open_chars = "";
     if (open_chars.find(line_statement[0]) == std::string::npos) {
@@ -2767,9 +2769,18 @@ class Parser {
       // build the relative path
       json json_name = json::parse(m_tok.text);
       std::string pathname = static_cast<std::string>(path);
-      pathname += json_name.get_ref<const std::string&>();
-      if (pathname.compare(0, 2, "./") == 0) {
-        pathname.erase(0, 2);
+      std::string include_path = json_name.get_ref<const std::string&>();
+      if (m_lexer.get_config().dot_is_current_dir) {
+        if (include_path.compare(0, 2, "./") != 0) {
+          pathname += include_path;
+        } else {
+          pathname = include_path;
+        }
+      } else {
+        pathname += include_path;
+        if (pathname.compare(0, 2, "./") == 0) {
+          pathname.erase(0, 2);
+        }
       }
       // sys::path::remove_dots(pathname, true, sys::path::Style::posix);
 
@@ -3650,6 +3661,11 @@ class Environment {
   /// Sets whether to strip the spaces and tabs from the start of a line to a block
   void set_lstrip_blocks(bool lstrip_blocks) {
     m_lexer_config.lstrip_blocks = lstrip_blocks;
+  }
+
+  /// Sets whether to strip the spaces and tabs from the start of a line to a block
+  void set_dot_is_current_dir(bool dot_is_current_dir) {
+    m_lexer_config.dot_is_current_dir = dot_is_current_dir;
   }
 
   /// Sets the element notation syntax
